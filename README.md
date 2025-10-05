@@ -1,18 +1,23 @@
 # Introduction
-This project provides Docker images to periodically back up a PostgreSQL database to AWS S3, and to restore from the backup as needed.
+
+This is a blatant fork of https://github.com/eeshugerman/postgres-backup-s3 which was itself a fork and re-structuring of @schickling's [postgres-backup-s3](https://github.com/schickling/dockerfiles/tree/master/postgres-backup-s3) and [postgres-restore-s3](https://github.com/schickling/dockerfiles/tree/master/postgres-restore-s3).
+
+It was archived and I still relied on it. Plus I needed PG 18.
+
+# Building the image
+
+Obviously replace `miharekar` with your dockerhub username and `18.0` with the desired PostgreSQL version.
+
+```
+❯ docker build -t miharekar/postgres-backup-s3:18.0 --build-arg POSTGRES_VERSION='18.0' . && docker push miharekar/postgres-backup-s3:18.0
+```
 
 # Usage
 ## Backup
 ```yaml
 services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-
   backup:
-    image: eeshugerman/postgres-backup-s3:16
+    image: miharekar/postgres-backup-s3:18.0
     environment:
       SCHEDULE: '@weekly'     # optional
       BACKUP_KEEP_DAYS: 7     # optional
@@ -28,7 +33,6 @@ services:
       POSTGRES_PASSWORD: password
 ```
 
-- Images are tagged by the major PostgreSQL version supported: `12`, `13`, `14`, `15` or `16`.
 - The `SCHEDULE` variable determines backup frequency. See go-cron schedules documentation [here](http://godoc.org/github.com/robfig/cron#hdr-Predefined_schedules). Omit to run the backup immediately and then exit.
 - If `PASSPHRASE` is provided, the backup will be encrypted using GPG.
 - Run `docker exec <container name> sh backup.sh` to trigger a backup ad-hoc.
@@ -52,30 +56,16 @@ docker exec <container name> sh restore.sh
 docker exec <container name> sh restore.sh <timestamp>
 ```
 
-# Development
-## Build the image locally
-`POSTGRES_VERSION` determines Postgres version.
-```sh
-DOCKER_BUILDKIT=1 docker build --build-arg POSTGRES_VERSION=17 .
-```
-## Run a simple test environment with Docker Compose
-```sh
-cp template.env .env
-# fill out your secrets/params in .env
-docker compose up -d
-```
-
 # Acknowledgements
-This project is a fork and re-structuring of @schickling's [postgres-backup-s3](https://github.com/schickling/dockerfiles/tree/master/postgres-backup-s3) and [postgres-restore-s3](https://github.com/schickling/dockerfiles/tree/master/postgres-restore-s3).
 
-## Fork goals
-These changes would have been difficult or impossible merge into @schickling's repo or similarly-structured forks.
+As mentioned above, this project is a blatant fork of https://github.com/eeshugerman/postgres-backup-s3
+
+As is the following text documenting the changes from the @schickling's [postgres-backup-s3](https://github.com/schickling/dockerfiles/tree/master/postgres-backup-s3):
+
   - dedicated repository
   - automated builds
   - support multiple PostgreSQL versions
   - backup and restore with one image
-
-## Other changes and features
   - some environment variables renamed or removed
   - uses `pg_dump`'s `custom` format (see [docs](https://www.postgresql.org/docs/10/app-pgdump.html))
   - drop and re-create all database objects on restore
@@ -85,3 +75,5 @@ These changes would have been difficult or impossible merge into @schickling's r
   - support encrypted (password-protected) backups
   - support for restoring from a specific backup by timestamp
   - support for auto-removal of old backups
+
+What's new in my fork is solely support for later versions of PostgreSQL.
